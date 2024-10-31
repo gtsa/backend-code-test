@@ -1,9 +1,42 @@
+class DiscountDatabase
+  def initialize
+    @discounts = {
+      apple: { type: :buy_one_get_one_free },
+      pear: { type: :buy_one_get_one_free },
+      banana: { type: :half_price },
+      pineapple: { type: :first_item_half_price },
+      mango: { type: :buy_three_get_one_free }
+    }
+  end
+
+  def get_discount_type(item)
+    discount = @discounts[item]
+    discount ? discount[:type] : :discount_nan
+  end
+
+  def calculate_price(price, count, discount_type)
+    case discount_type
+    when :buy_one_get_one_free
+      price * (count - count/2)
+    when :buy_three_get_one_free
+      price * (count - count/4)
+    when :first_item_half_price
+      price / 2 + price * (count - 1)
+    when :half_price
+      (price / 2) * count
+    else
+      price * count
+    end
+  end
+end
+
 class Checkout
   attr_reader :prices
   private :prices
 
   def initialize(prices)
     @prices = prices
+    @discount_database = DiscountDatabase.new
   end
 
   def scan(item)
@@ -14,18 +47,9 @@ class Checkout
     total = 0
 
     items_counts(basket).each do |item, count|
-      case item
-      when :apple, :pear
-        total += discount_buy_one_get_one_free(prices.fetch(item), count)
-      when :pineapple
-        total += discount_first_item_half_price(prices.fetch(item), count)
-      when :mango
-        total += discount_buy_three_get_one_free(prices.fetch(item), count)
-      when :banana
-        total += discount_half_price(prices.fetch(item), count)
-      else
-        total += discount_nan(prices.fetch(item), count)
-      end
+      discount_type = @discount_database.get_discount_type(item)
+      price = prices.fetch(item)
+      total += @discount_database.calculate_price(price, count, discount_type)
     end
 
     total
@@ -39,25 +63,5 @@ class Checkout
 
   def items_counts(items)
     items.tally
-  end
-
-  def discount_buy_one_get_one_free(price, count)
-    price * (count - count/2)
-  end
-
-  def discount_buy_three_get_one_free(price, count)
-    price * (count - count/4)
-  end
-
-  def discount_first_item_half_price(price, count)
-    price / 2 + price * (count - 1)
-  end
-
-  def discount_half_price(price, count)
-    (price / 2) * count
-  end
-
-  def discount_nan(price, count)
-    price * count
   end
 end
