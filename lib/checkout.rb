@@ -10,24 +10,19 @@ class Checkout
     basket << item.to_sym
   end
 
-  def items_counts(items)
-    items.tally
-  end
-
   def total
     total = 0
 
     items_counts(basket).each do |item, count|
-      if item == :apple || item == :pear
+      case item
+      when :apple, :pear
         total += discount_buy_one_get_one_free(prices.fetch(item), count)
-      elsif item == :banana || item == :pineapple || item == :mango
-        if item == :pineapple
-          total += discount_first_item_half_price(prices.fetch(item), count)
-        elsif item == :mango
-          total += discount_buy_three_get_one_free(prices.fetch(item), count)
-        else
-          total += discount_half_price(prices.fetch(item), count)
-        end
+      when :pineapple
+        total += discount_first_item_half_price(prices.fetch(item), count)
+      when :mango
+        total += discount_buy_three_get_one_free(prices.fetch(item), count)
+      when :banana
+        total += discount_half_price(prices.fetch(item), count)
       else
         total += discount_nan(prices.fetch(item), count)
       end
@@ -42,12 +37,12 @@ class Checkout
     @basket ||= Array.new
   end
 
+  def items_counts(items)
+    items.tally
+  end
+
   def discount_buy_one_get_one_free(price, count)
-    if (count % 2 == 0)
-      price * (count / 2)
-    else
-      price * count
-    end
+    price * (count - count/2)
   end
 
   def discount_buy_three_get_one_free(price, count)
@@ -55,8 +50,7 @@ class Checkout
   end
 
   def discount_first_item_half_price(price, count)
-    total = price / 2
-    total += price * (count - 1)
+    price / 2 + price * (count - 1)
   end
 
   def discount_half_price(price, count)
