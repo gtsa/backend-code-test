@@ -2,7 +2,7 @@ require_relative 'discount_database'
 
 class Checkout
   attr_reader :prices
-  private :prices
+#  private :prices
 
   def initialize(prices)
     # Initializes the checkout with item prices and sets up the discount database.
