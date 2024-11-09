@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'checkout'
+require 'discount_database'
 
 RSpec.describe Checkout do
   describe '#total' do
@@ -28,7 +29,7 @@ RSpec.describe Checkout do
       end
     end
 
-    context 'when a two for 1 applies on apples' do
+    context 'when a buy one get one free discount applies on apples' do
       before do
         checkout.scan(:apple)
         checkout.scan(:apple)
@@ -36,6 +37,16 @@ RSpec.describe Checkout do
 
       it 'returns the discounted price for the basket' do
         expect(total).to eq(10)
+      end
+
+      context 'and there is an odd number of apples' do
+        before do
+          checkout.scan(:apple)
+        end
+
+        it 'returns the correctly discounted price for the basket' do
+          expect(total).to eq(20)
+        end
       end
 
       context 'and there are other items' do
@@ -49,7 +60,7 @@ RSpec.describe Checkout do
       end
     end
 
-    context 'when a two for 1 applies on pears' do
+    context 'when a buy one get one free discount applies on pears' do
       before do
         checkout.scan(:pear)
         checkout.scan(:pear)
@@ -80,7 +91,7 @@ RSpec.describe Checkout do
       end
     end
 
-    context 'when a half price offer applies on pineapples restricted to 1 per customer' do
+    context 'when a first-item half-price discount applies on pineapples' do
       before do
         checkout.scan(:pineapple)
         checkout.scan(:pineapple)
@@ -91,14 +102,34 @@ RSpec.describe Checkout do
       end
     end
 
-    context 'when a buy 3 get 1 free offer applies to mangos' do
+    context 'when a buy three get one free discount applies on mangos' do
       before do
         4.times { checkout.scan(:mango) }
       end
 
       it 'returns the discounted price for the basket' do
-        pending 'You need to write the code to satisfy this test'
         expect(total).to eq(600)
+      end
+    end
+
+    context 'when a combination of all different fruits in different quantities' do
+      before do
+        4.times { checkout.scan(:apple) }
+        4.times { checkout.scan(:orange) }
+        4.times { checkout.scan(:pear) }
+        7.times { checkout.scan(:banana) }
+        2.times { checkout.scan(:pineapple) }
+        1.times { checkout.scan(:mango) }
+      end
+
+      it 'returns the correct total for the basket' do
+        expect(checkout.total).to eq(585)
+      end
+    end
+
+    context 'when calculating total without scanning any items' do
+      it 'returns a total of zero' do
+        expect(total).to eq(0.00)
       end
     end
   end
